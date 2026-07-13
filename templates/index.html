@@ -384,11 +384,6 @@
                                     <i class="bi bi-arrow-counterclockwise me-1"></i>Undo
                                 </button>
                             </div>
-                            <div>
-                                <button class="btn btn-outline-primary btn-sm" id="assign-category-btn" onclick="openCategoryModal()" disabled>
-                                    <i class="bi bi-tag me-1"></i>Assign Category
-                                </button>
-                            </div>
                         </div>
 
                         <!-- Transaction Table -->
@@ -410,23 +405,28 @@
                             </table>
                         </div>
                         
-                        <!-- Category Assignment Modal -->
-                        <div class="modal fade" id="categoryModal" tabindex="-1">
-                            <div class="modal-dialog">
+                        <!-- Category Picker Modal -->
+                        <div class="modal fade" id="categoryPickerModal" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title">Assign Category</h5>
+                                        <h5 class="modal-title">Change Category</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <p class="mb-2">Select category for <strong id="category-modal-count">0</strong> uncategorized transaction(s):</p>
+                                        <p class="mb-3">Select new category for:</p>
+                                        <div class="alert alert-info mb-3">
+                                            <strong id="category-picker-title">Transaction</strong>
+                                            <small id="category-picker-amount" class="text-muted"></small>
+                                        </div>
                                         <div class="row g-2">
-                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Dining')">Dining</button></div>
-                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Shopping')">Shopping</button></div>
-                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Transport')">Transport</button></div>
-                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Entertainment')">Entertainment</button></div>
-                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Bills')">Bills</button></div>
-                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Income')">Income</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="changeCategory('Dining')">Dining</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="changeCategory('Shopping')">Shopping</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="changeCategory('Transport')">Transport</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="changeCategory('Entertainment')">Entertainment</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="changeCategory('Bills')">Bills</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="changeCategory('Income')">Income</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="changeCategory('Uncategorized')">Uncategorized</button></div>
                                         </div>
                                     </div>
                                 </div>
@@ -724,7 +724,8 @@
         // CRUD functionality
         let deletedTransactions = new Set();
         let selectedTransactionIds = new Set();
-        let categoryModal = null;
+        let categoryPickerModal = null;
+        let currentTransactionId = null;
 
         function renderTransactions(transactions) {
             const tbody = document.getElementById('transactions-body');
@@ -749,7 +750,7 @@
                     <td>${tx.title}</td>
                     <td class="text-muted small">${tx.note}</td>
                     <td class="${amountClass}">${displayAmount}</td>
-                    <td><span class="category-badge category-${tx['category name']}">${tx['category name']}</span></td>
+                    <td><span class="category-badge category-${tx['category name']}" onclick="openCategoryPicker('${txId}')" title="Click to change category">${tx['category name']}</span></td>
                     <td>${tx.icon ? `<i class="bi bi-${tx.icon}"></i>` : ''}</td>
                 `;
                 tbody.appendChild(row);
@@ -788,23 +789,9 @@
         function updateActionButtons() {
             const deleteBtn = document.getElementById('delete-selected-btn');
             const undoBtn = document.getElementById('undo-btn');
-            const assignCatBtn = document.getElementById('assign-category-btn');
             
             deleteBtn.disabled = selectedTransactionIds.size === 0;
             undoBtn.disabled = deletedTransactions.size === 0;
-            
-            // Count uncategorized transactions
-            let uncategorizedCount = 0;
-            document.querySelectorAll('#transactions-body tr').forEach(row => {
-                if (row.style.display !== 'none') {
-                    const category = row.querySelector('.category-badge').textContent;
-                    if (category === 'Uncategorized') {
-                        uncategorizedCount++;
-                    }
-                }
-            });
-            assignCatBtn.disabled = uncategorizedCount === 0;
-            assignCatBtn.innerHTML = `<i class="bi bi-tag me-1"></i>Assign Category (${uncategorizedCount})`;
         }
 
         function deleteSelected() {
@@ -820,20 +807,7 @@
             renderTransactions(processedData.transactions);
         }
 
-        function openCategoryModal() {
-            let uncategorizedCount = 0;
-            document.querySelectorAll('#transactions-body tr').forEach(row => {
-                if (row.style.display !== 'none') {
-                    const category = row.querySelector('.category-badge').textContent;
-                    if (category === 'Uncategorized') {
-                        uncategorizedCount++;
-                    }
-                }
-            });
-            document.getElementById('category-modal-count').textContent = uncategorizedCount;
-            categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
-            categoryModal.show();
-        }
+
 
         function assignCategory(category) {
             // Update both DOM and data object
@@ -855,6 +829,52 @@
             if (categoryModal) {
                 categoryModal.hide();
             }
+            renderTransactions(processedData.transactions);
+        }
+
+        // Category Picker for individual transactions
+        function openCategoryPicker(txId) {
+            const transaction = processedData.transactions.find(tx => {
+                const id = tx.date + '|' + tx.amount + '|' + tx.title;
+                return id === txId;
+            });
+            
+            if (!transaction) return;
+            
+            currentTransactionId = txId;
+            document.getElementById('category-picker-title').textContent = transaction.title;
+            const amount = parseFloat(transaction.amount);
+            const displayAmount = transaction.income === 'true' ? `+${amount.toFixed(2)}` : `-${Math.abs(amount).toFixed(2)}`;
+            document.getElementById('category-picker-amount').textContent = displayAmount;
+            
+            categoryPickerModal = new bootstrap.Modal(document.getElementById('categoryPickerModal'));
+            categoryPickerModal.show();
+        }
+
+        function changeCategory(category) {
+            // Update data object
+            const transaction = processedData.transactions.find(tx => {
+                const id = tx.date + '|' + tx.amount + '|' + tx.title;
+                return id === currentTransactionId;
+            });
+            
+            if (transaction) {
+                transaction['category name'] = category;
+            }
+            
+            // Update DOM
+            document.querySelectorAll('#transactions-body tr').forEach(row => {
+                if (row.dataset.txId === currentTransactionId) {
+                    const badge = row.querySelector('.category-badge');
+                    badge.textContent = category;
+                    badge.className = `category-badge category-${category}`;
+                }
+            });
+            
+            if (categoryPickerModal) {
+                categoryPickerModal.hide();
+            }
+            currentTransactionId = null;
             renderTransactions(processedData.transactions);
         }
     </script>

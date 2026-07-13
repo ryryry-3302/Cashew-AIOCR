@@ -1,0 +1,279 @@
+
+# Merchant matching rules
+# Each merchant can have multiple rules
+
+# Format 1: Simple mapping (merchant -> category)
+# McDonald's: Dining
+# Starbucks: Dining
+
+# Format 2: Full rule with match criteria
+Grab Food:
+  match:
+    type: contains
+    value: grab
+  output:
+    category: Dining
+    icon: cutlery
+    color: "#FF607D8B"
+    emoji: "🍔"
+
+Shopee:
+  match:
+    type: prefix
+    value: shopee
+  output:
+    category: Shopping
+    icon: shopping_cart
+    color: "#FF9900"
+    emoji: "🛒"
+
+Steam:
+  match:
+    type: contains
+    value: steam
+  output:
+    category: Entertainment
+    icon: gamepad
+    color: "#4A148C"
+    emoji: "🎮"
+
+Netflix:
+  match:
+    type: contains
+    value: netflix
+  output:
+    category: Entertainment
+    icon: tv
+    color: "#E50914"
+    emoji: "🎬"
+
+Uber:
+  match:
+    type: contains
+    value: uber
+  output:
+    category: Transport
+    icon: local_taxi
+    color: "#000000"
+    emoji: "🚕"
+
+Grab:
+  match:
+    type: contains
+    value: grab
+  output:
+    category: Transport
+    icon: local_taxi
+    color: "#00B14F"
+    emoji: "🚖"
+
+Lazada:
+  match:
+    type: prefix
+    value: lazada
+  output:
+    category: Shopping
+    icon: shopping_cart
+    color: "#FF6600"
+    emoji: "🛍️"
+
+Amazon:
+  match:
+    type: contains
+    value: amazon
+  output:
+    category: Shopping
+    icon: shopping_cart
+    color: "#FF9900"
+    emoji: "📦"
+
+Spotify:
+  match:
+    type: contains
+    value: spotify
+  output:
+    category: Entertainment
+    icon: music
+    color: "#1DB954"
+    emoji: "🎵"
+
+Apple:
+  match:
+    type: contains
+    value: apple
+  output:
+    category: Entertainment
+    icon: app_store
+    color: "#A2AAAD"
+    emoji: "🍎"
+
+Google:
+  match:
+    type: contains
+    value: google
+  output:
+    category: Entertainment
+    icon: play_circle
+    color: "#4285F4"
+    emoji: "🔍"
+
+PayNow:
+  match:
+    type: contains
+    value: paynow
+  output:
+    category: Bills
+    icon: credit_card
+    color: "#000000"
+    emoji: "💳"
+
+Singtel:
+  match:
+    type: contains
+    value: singtel
+  output:
+    category: Bills
+    icon: phone
+    color: "#E3001B"
+    emoji: "📱"
+
+StarHub:
+  match:
+    type: contains
+    value: starhub
+  output:
+    category: Bills
+    icon: phone
+    color: "#000000"
+    emoji: "📞"
+
+M1:
+  match:
+    type: contains
+    value: m1
+  output:
+    category: Bills
+    icon: phone
+    color: "#000000"
+    emoji: "📲"
+
+NTUC:
+  match:
+    type: contains
+    value: ntuc
+  output:
+    category: Shopping
+    icon: grocery
+    color: "#006633"
+    emoji: "🛒"
+
+FairPrice:
+  match:
+    type: contains
+    value: fairprice
+  output:
+    category: Shopping
+    icon: grocery
+    color: "#006633"
+    emoji: "🥬"
+
+ColdStorage:
+  match:
+    type: contains
+    value: cold storage
+  output:
+    category: Shopping
+    icon: grocery
+    color: "#006633"
+    emoji: "🥕"
+
+INCEPTION:
+  match:
+    type: contains
+    value: inception
+  output:
+    category: Entertainment
+    icon: gamepad
+    color: "#4A148C"
+    emoji: "🎮"
+
+BUS:
+  match:
+    type: contains
+    value: bus
+  output:
+    category: Transport
+    icon: local_transit
+    color: "#0000FF"
+    emoji: "🚌"
+
+LUCKIN:
+  match:
+    type: contains
+    value: luckin
+  output:
+    category: Dining
+    icon: coffee
+    color: "#8B4513"
+    emoji: "☕"
+
+SAIZERIYA:
+  match:
+    type: contains
+    value: saizeriya
+  output:
+    category: Dining
+    icon: cutlery
+    color: "#FF607D8B"
+    emoji: "🍝"
+
+PARIS BAGUETTE:
+  match:
+    type: contains
+    value: paris baguette
+  output:
+    category: Dining
+    icon: bakery
+    color: "#FFA500"
+    emoji: "🥐"
+
+KURIYA:
+  match:
+    type: contains
+    value: kuriya
+  output:
+    category: Dining
+    icon: sushi
+    color: "#FF607D8B"
+    emoji: "🍱"
+
+COFFEE BEAN:
+  match:
+    type: contains
+    value: coffee bean
+  output:
+    category: Dining
+    icon: coffee
+    color: "#8B4513"
+    emoji: "☕"
+
+Cashback:
+  match:
+    type: contains
+    value: cashback
+  output:
+    category: Income
+    icon: arrow_upward
+    color: "#4CAF50"
+    emoji: "💰"
+
+Interest:
+  match:
+    type: contains
+    value: interest
+  output:
+    category: Income
+    icon: arrow_upward
+    color: "#4CAF50"
+    emoji: "💰"
+

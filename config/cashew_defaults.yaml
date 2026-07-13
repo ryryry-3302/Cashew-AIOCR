@@ -1,0 +1,6 @@
+
+# Default values for Cashew transaction fields
+
+budget: ""
+objective: ""
+extra: ""

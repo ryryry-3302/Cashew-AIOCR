@@ -1,1 +1,5 @@
-data/cashew-2026-07-11-08-36-16-402924.csv
+data/
+input/
+output/
+.gitignore
+src/__pycache__/

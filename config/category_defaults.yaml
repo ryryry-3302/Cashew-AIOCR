@@ -1,0 +1,44 @@
+
+# Category default settings for Cashew
+# These apply when a category is matched but no specific icon/color is defined
+
+Dining:
+  icon: cutlery
+  color: "#FF607D8B"
+  emoji: "🍔"
+
+Shopping:
+  icon: shopping_cart
+  color: "#FF9900"
+  emoji: "🛒"
+
+Transport:
+  icon: local_taxi
+  color: "#000000"
+  emoji: "🚕"
+
+Entertainment:
+  icon: gamepad
+  color: "#4A148C"
+  emoji: "🎮"
+
+Bills:
+  icon: credit_card
+  color: "#808080"
+  emoji: "💳"
+
+Income:
+  icon: arrow_upward
+  color: "#4CAF50"
+  emoji: "💰"
+
+Uncategorized:
+  icon: default
+  color: "#808080"
+  emoji: ""
+
+Transfer:
+  icon: sync
+  color: "#607D8B"
+  emoji: "🔄"
+

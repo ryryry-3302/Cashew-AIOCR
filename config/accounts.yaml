@@ -1,0 +1,16 @@
+
+# Map institutions to Cashew account names
+# Keys are institution names from JSON files
+# Values are Cashew account names
+
+# Default account for transactions without institution
+_: Bank
+
+DBS: Bank
+UOB: Bank
+OCBC: Bank
+Maybank: Bank
+GrabPay: Wallet
+ShopeePay: Wallet
+PayNow: Wallet
+MariBank: Bank

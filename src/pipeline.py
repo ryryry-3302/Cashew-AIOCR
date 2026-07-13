@@ -114,6 +114,9 @@ class CashewPipeline:
     
     def process_directory(self, input_dir: str) -> PipelineResult:
         """Process all JSON files in a directory."""
+        import time
+        start_time = time.time()
+        
         input_path = Path(input_dir)
         
         all_transactions: List[CanonicalTransaction] = []
@@ -122,6 +125,8 @@ class CashewPipeline:
         
         # Find all JSON files
         json_files = sorted(input_path.glob("*.json"))
+        
+        logger.info(f"Found {len(json_files)} JSON files in {input_dir}")
         
         if not json_files:
             logger.warning(f"No JSON files found in {input_dir}")
@@ -135,11 +140,13 @@ class CashewPipeline:
             )
         
         # Process each file
-        for filepath in json_files:
+        for i, filepath in enumerate(json_files):
+            logger.info(f"Processing file {i+1}/{len(json_files)}: {filepath.name}")
             result = self.process_file(str(filepath))
             all_transactions.extend(result.transactions)
             all_errors.extend(result.validation_errors)
             files_processed.append(filepath.name)
+            logger.info(f"  Loaded {len(result.transactions)} transactions")
         
         logger.info(f"Total transactions: {len(all_transactions)}")
         
@@ -154,6 +161,8 @@ class CashewPipeline:
         uncategorized_count = sum(
             1 for tx in unique_transactions if tx.category == "Uncategorized"
         )
+        
+        logger.info(f"Processing completed in {time.time() - start_time:.2f}s")
         
         return PipelineResult(
             total_transactions=len(unique_transactions),
@@ -241,6 +250,7 @@ def run_pipeline(
     config_dir: str = "config",
     output_dir: str = "output",
     existing_data_path: Optional[str] = None,
+    timeout: int = 60,  # seconds
 ) -> PipelineResult:
     """Run the complete pipeline."""
     logger.info("Starting Cashew import pipeline")

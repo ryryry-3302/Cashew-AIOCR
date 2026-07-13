@@ -128,14 +128,20 @@ def upload_jsons():
 @app.route('/api/process', methods=['POST'])
 def process_files():
     """Process uploaded files and generate combined preview."""
+    import time
+    start_time = time.time()
+    
     data = request.get_json()
     cashew_filepath = data.get('cashew_filepath')
     json_files = data.get('json_files', [])
+    
+    print(f"[DEBUG] Processing request: cashew={cashew_filepath}, json_files={json_files}")
     
     # If only Cashew file is uploaded, just return the existing transactions
     if not json_files and cashew_filepath:
         try:
             transactions = CashewExporter.read(cashew_filepath)
+            print(f"[DEBUG] Read {len(transactions)} transactions from Cashew file")
             return jsonify({
                 'success': True,
                 'transactions': [tx.to_csv_row() for tx in transactions],
@@ -144,10 +150,25 @@ def process_files():
                 'uncategorized_count': 0,
             })
         except Exception as e:
+            print(f"[DEBUG] Error reading Cashew file: {e}")
             return jsonify({'error': f'Failed to read CSV: {str(e)}'}), 500
     
     if not json_files:
         return jsonify({'error': 'No JSON files to process'}), 400
+    
+    # Check if JSON files exist
+    jsons_dir = Path(app.config['UPLOAD_FOLDER']) / 'jsons'
+    missing_files = []
+    for filename in json_files:
+        filepath = jsons_dir / filename
+        if not filepath.exists():
+            missing_files.append(filename)
+    
+    if missing_files:
+        print(f"[DEBUG] Missing files: {missing_files}")
+        return jsonify({'error': f'Files not found: {missing_files}'}), 400
+    
+    print(f"[DEBUG] Found {len(json_files)} JSON files")
     
     # Create temporary output directory
     output_dir = Path(app.config['UPLOAD_FOLDER']) / 'output'
@@ -155,17 +176,21 @@ def process_files():
     
     # Run pipeline
     try:
+        print(f"[DEBUG] Starting pipeline with input_dir={jsons_dir}")
         result = run_pipeline(
-            input_dir=str(Path(app.config['UPLOAD_FOLDER']) / 'jsons'),
+            input_dir=str(jsons_dir),
             config_dir='config',
             output_dir=str(output_dir),
             existing_data_path=cashew_filepath if cashew_filepath else None,
         )
+        print(f"[DEBUG] Pipeline completed in {time.time() - start_time:.2f}s")
         
         # Read the generated CSV
         csv_path = output_dir / 'cashew_import.csv'
         if csv_path.exists():
+            print(f"[DEBUG] Reading CSV from {csv_path}")
             transactions = CashewExporter.read(str(csv_path))
+            print(f"[DEBUG] Read {len(transactions)} transactions from CSV")
             return jsonify({
                 'success': True,
                 'transactions': [tx.to_csv_row() for tx in transactions],
@@ -174,8 +199,12 @@ def process_files():
                 'uncategorized_count': result.uncategorized_count,
             })
         else:
+            print(f"[DEBUG] CSV file not found at {csv_path}")
             return jsonify({'error': 'Failed to generate output CSV'}), 500
     except Exception as e:
+        print(f"[DEBUG] Processing error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': f'Processing failed: {str(e)}'}), 500
 
 

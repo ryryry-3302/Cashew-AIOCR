@@ -836,6 +836,13 @@
         }
 
         function assignCategory(category) {
+            // Update both DOM and data object
+            processedData.transactions.forEach(tx => {
+                if (tx['category name'] === 'Uncategorized') {
+                    tx['category name'] = category;
+                }
+            });
+            
             document.querySelectorAll('#transactions-body tr').forEach(row => {
                 if (row.style.display !== 'none') {
                     const badge = row.querySelector('.category-badge');

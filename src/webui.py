@@ -132,15 +132,17 @@ def process_files():
     start_time = time.time()
     
     data = request.get_json()
-    cashew_filepath = data.get('cashew_filepath')
+    cashew_filename = data.get('cashew_filepath')
     json_files = data.get('json_files', [])
     
-    print(f"[DEBUG] Processing request: cashew={cashew_filepath}, json_files={json_files}")
+    print(f"[DEBUG] Processing request: cashew={cashew_filename}, json_files={json_files}")
     
     # If only Cashew file is uploaded, just return the existing transactions
-    if not json_files and cashew_filepath:
+    if not json_files and cashew_filename:
+        # Construct full path
+        cashew_full_path = Path(app.config['UPLOAD_FOLDER']) / 'cashew' / cashew_filename
         try:
-            transactions = CashewExporter.read(cashew_filepath)
+            transactions = CashewExporter.read(str(cashew_full_path))
             print(f"[DEBUG] Read {len(transactions)} transactions from Cashew file")
             return jsonify({
                 'success': True,
@@ -174,6 +176,11 @@ def process_files():
     output_dir = Path(app.config['UPLOAD_FOLDER']) / 'output'
     output_dir.mkdir(parents=True, exist_ok=True)
     
+    # Construct full path for Cashew file if provided
+    cashew_full_path = None
+    if cashew_filename:
+        cashew_full_path = Path(app.config['UPLOAD_FOLDER']) / 'cashew' / cashew_filename
+    
     # Run pipeline
     try:
         print(f"[DEBUG] Starting pipeline with input_dir={jsons_dir}")
@@ -181,7 +188,7 @@ def process_files():
             input_dir=str(jsons_dir),
             config_dir='config',
             output_dir=str(output_dir),
-            existing_data_path=cashew_filepath if cashew_filepath else None,
+            existing_data_path=str(cashew_full_path) if cashew_full_path else None,
         )
         print(f"[DEBUG] Pipeline completed in {time.time() - start_time:.2f}s")
         

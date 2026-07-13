@@ -1,0 +1,9 @@
+# Web Framework
+flask>=2.0.0
+werkzeug>=2.0.0
+
+# YAML parsing
+pyyaml>=6.0
+
+# Optional: For better JSON handling
+orjson>=3.8.0

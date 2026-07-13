@@ -18,8 +18,9 @@ from validator import validate_json_file
 from exporter import CashewExporter
 from config import load_config
 
-app = Flask(__name__, template_folder='../templates')
-app.config['UPLOAD_FOLDER'] = str(Path(__file__).parent.parent / 'uploads')
+PROJECT_ROOT = Path(__file__).parent.parent
+app = Flask(__name__, template_folder=str(PROJECT_ROOT.resolve() / 'templates'))
+app.config['UPLOAD_FOLDER'] = str(PROJECT_ROOT.resolve() / 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 app.config['JSON_SORT_KEYS'] = False
 

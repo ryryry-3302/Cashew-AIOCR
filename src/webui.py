@@ -218,12 +218,22 @@ def process_files():
 @app.route('/api/export', methods=['POST'])
 def export_csv():
     """Export the final CSV file."""
-    data = request.get_json()
-    output_dir = Path(app.config['UPLOAD_FOLDER']) / 'output'
+    # Use the same output directory as the pipeline
+    output_dir = Path('/home/jovyan/Workspace/Cashew-AIOCR/output')
     csv_path = output_dir / 'cashew_import.csv'
     
+    print(f"[DEBUG] output_dir = {output_dir}")
+    print(f"[DEBUG] csv_path = {csv_path}")
+    print(f"[DEBUG] CSV exists: {csv_path.exists()}")
+    
     if not csv_path.exists():
-        return jsonify({'error': 'No CSV file to export'}), 404
+        # Try to find any CSV file in the output directory
+        csv_files = list(output_dir.glob('*.csv'))
+        if csv_files:
+            csv_path = csv_files[0]
+            print(f"[DEBUG] Found CSV file: {csv_path}")
+        else:
+            return jsonify({'error': 'No CSV file to export'}), 404
     
     return send_file(
         csv_path,

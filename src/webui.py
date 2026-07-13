@@ -261,6 +261,17 @@ def download_template():
     return jsonify(template)
 
 
+@app.route('/api/system-prompt', methods=['GET'])
+def get_system_prompt():
+    """Get the system prompt text."""
+    import os
+    prompt_path = Path(__file__).parent.parent / 'SYSTEMPROMPT.md'
+    if prompt_path.exists():
+        with open(prompt_path, 'r') as f:
+            return f.read()
+    return 'System prompt not found', 404
+
+
 if __name__ == '__main__':
     # Create upload folders
     upload_folder = Path(app.config['UPLOAD_FOLDER'])

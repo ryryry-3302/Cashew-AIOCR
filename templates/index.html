@@ -201,6 +201,9 @@
                     <p class="mb-0 opacity-75">Upload bank statements and merge with your existing Cashew data</p>
                 </div>
                 <div class="col-md-4 text-md-end">
+                    <button class="btn btn-light btn-sm me-2" onclick="copySystemPrompt()">
+                        <i class="bi bi-clipboard-plus me-1"></i>Copy System Prompt
+                    </button>
                     <button class="btn btn-light btn-sm" onclick="downloadTemplate()">
                         <i class="bi bi-file-earmark-arrow-down me-1"></i>Download JSON Template
                     </button>
@@ -371,11 +374,29 @@
                             </div>
                         </div>
 
+                        <!-- Transaction Actions -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="btn-group">
+                                <button class="btn btn-outline-danger btn-sm" id="delete-selected-btn" onclick="deleteSelected()" disabled>
+                                    <i class="bi bi-trash me-1"></i>Delete Selected
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" id="undo-btn" onclick="undoDelete()" disabled>
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Undo
+                                </button>
+                            </div>
+                            <div>
+                                <button class="btn btn-outline-primary btn-sm" id="assign-category-btn" onclick="openCategoryModal()" disabled>
+                                    <i class="bi bi-tag me-1"></i>Assign Category
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Transaction Table -->
                         <div class="table-responsive">
                             <table class="table table-hover transaction-table" id="transactions-table">
                                 <thead>
                                     <tr>
+                                        <th style="width: 40px;"><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th>
                                         <th>Date</th>
                                         <th>Title</th>
                                         <th>Note</th>
@@ -387,6 +408,29 @@
                                 <tbody id="transactions-body">
                                 </tbody>
                             </table>
+                        </div>
+                        
+                        <!-- Category Assignment Modal -->
+                        <div class="modal fade" id="categoryModal" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Assign Category</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p class="mb-2">Select category for <strong id="category-modal-count">0</strong> uncategorized transaction(s):</p>
+                                        <div class="row g-2">
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Dining')">Dining</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Shopping')">Shopping</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Transport')">Transport</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Entertainment')">Entertainment</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Bills')">Bills</button></div>
+                                            <div class="col-6 col-md-4"><button class="btn btn-outline-primary w-100" onclick="assignCategory('Income')">Income</button></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -663,6 +707,148 @@
             } catch (err) {
                 alert('Error downloading template: ' + err.message);
             }
+        }
+
+        // Copy System Prompt
+        async function copySystemPrompt() {
+            try {
+                const response = await fetch('/api/system-prompt');
+                const prompt = await response.text();
+                await navigator.clipboard.writeText(prompt);
+                alert('System prompt copied to clipboard!');
+            } catch (err) {
+                alert('Error copying system prompt: ' + err.message);
+            }
+        }
+
+        // CRUD functionality
+        let deletedTransactions = new Set();
+        let selectedTransactionIds = new Set();
+        let categoryModal = null;
+
+        function renderTransactions(transactions) {
+            const tbody = document.getElementById('transactions-body');
+            tbody.innerHTML = '';
+            
+            transactions.forEach(tx => {
+                const txId = tx.date + '|' + tx.amount + '|' + tx.title;
+                const isDeleted = deletedTransactions.has(txId);
+                const isSelected = selectedTransactionIds.has(txId);
+                const amountClass = tx.income === 'true' ? 'direction-credit' : 'direction-debit';
+                const amount = parseFloat(tx.amount);
+                const displayAmount = amountClass === 'direction-credit' ? `+${amount.toFixed(2)}` : `-${Math.abs(amount).toFixed(2)}`;
+                
+                const row = document.createElement('tr');
+                row.dataset.txId = txId;
+                row.style.display = isDeleted ? 'none' : '';
+                row.style.backgroundColor = isSelected ? '#e0e7ff' : '';
+                
+                row.innerHTML = `
+                    <td><input type="checkbox" class="tx-checkbox" data-txid="${txId}" ${isSelected ? 'checked' : ''} onchange="toggleSelect('${txId}')"></td>
+                    <td>${tx.date}</td>
+                    <td>${tx.title}</td>
+                    <td class="text-muted small">${tx.note}</td>
+                    <td class="${amountClass}">${displayAmount}</td>
+                    <td><span class="category-badge category-${tx['category name']}">${tx['category name']}</span></td>
+                    <td>${tx.icon ? `<i class="bi bi-${tx.icon}"></i>` : ''}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            updateActionButtons();
+        }
+
+        function toggleSelect(txId) {
+            if (selectedTransactionIds.has(txId)) {
+                selectedTransactionIds.delete(txId);
+            } else {
+                selectedTransactionIds.add(txId);
+            }
+            updateActionButtons();
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('select-all');
+            const checkboxes = document.querySelectorAll('.tx-checkbox');
+            
+            if (selectAll.checked) {
+                checkboxes.forEach(cb => {
+                    selectedTransactionIds.add(cb.dataset.txid);
+                    cb.checked = true;
+                });
+            } else {
+                checkboxes.forEach(cb => {
+                    selectedTransactionIds.delete(cb.dataset.txid);
+                    cb.checked = false;
+                });
+            }
+            updateActionButtons();
+        }
+
+        function updateActionButtons() {
+            const deleteBtn = document.getElementById('delete-selected-btn');
+            const undoBtn = document.getElementById('undo-btn');
+            const assignCatBtn = document.getElementById('assign-category-btn');
+            
+            deleteBtn.disabled = selectedTransactionIds.size === 0;
+            undoBtn.disabled = deletedTransactions.size === 0;
+            
+            // Count uncategorized transactions
+            let uncategorizedCount = 0;
+            document.querySelectorAll('#transactions-body tr').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const category = row.querySelector('.category-badge').textContent;
+                    if (category === 'Uncategorized') {
+                        uncategorizedCount++;
+                    }
+                }
+            });
+            assignCatBtn.disabled = uncategorizedCount === 0;
+            assignCatBtn.innerHTML = `<i class="bi bi-tag me-1"></i>Assign Category (${uncategorizedCount})`;
+        }
+
+        function deleteSelected() {
+            selectedTransactionIds.forEach(txId => {
+                deletedTransactions.add(txId);
+            });
+            selectedTransactionIds.clear();
+            renderTransactions(processedData.transactions);
+        }
+
+        function undoDelete() {
+            deletedTransactions.clear();
+            renderTransactions(processedData.transactions);
+        }
+
+        function openCategoryModal() {
+            let uncategorizedCount = 0;
+            document.querySelectorAll('#transactions-body tr').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const category = row.querySelector('.category-badge').textContent;
+                    if (category === 'Uncategorized') {
+                        uncategorizedCount++;
+                    }
+                }
+            });
+            document.getElementById('category-modal-count').textContent = uncategorizedCount;
+            categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+            categoryModal.show();
+        }
+
+        function assignCategory(category) {
+            document.querySelectorAll('#transactions-body tr').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const badge = row.querySelector('.category-badge');
+                    if (badge.textContent === 'Uncategorized') {
+                        badge.textContent = category;
+                        badge.className = `category-badge category-${category}`;
+                    }
+                }
+            });
+            if (categoryModal) {
+                categoryModal.hide();
+            }
+            renderTransactions(processedData.transactions);
         }
     </script>
 </body>

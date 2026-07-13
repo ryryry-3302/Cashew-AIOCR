@@ -112,7 +112,7 @@ class CashewPipeline:
             skipped_count=len(errors),
         )
     
-    def process_directory(self, input_dir: str) -> PipelineResult:
+    def process_directory(self, input_dir: str, timeout: int = 60) -> PipelineResult:
         """Process all JSON files in a directory."""
         import time
         start_time = time.time()
@@ -141,6 +141,11 @@ class CashewPipeline:
         
         # Process each file
         for i, filepath in enumerate(json_files):
+            # Check timeout
+            if time.time() - start_time > timeout:
+                logger.error(f"Timeout reached after processing {i} files")
+                break
+            
             logger.info(f"Processing file {i+1}/{len(json_files)}: {filepath.name}")
             result = self.process_file(str(filepath))
             all_transactions.extend(result.transactions)
@@ -162,7 +167,8 @@ class CashewPipeline:
             1 for tx in unique_transactions if tx.category == "Uncategorized"
         )
         
-        logger.info(f"Processing completed in {time.time() - start_time:.2f}s")
+        elapsed = time.time() - start_time
+        logger.info(f"Processing completed in {elapsed:.2f}s")
         
         return PipelineResult(
             total_transactions=len(unique_transactions),
@@ -265,7 +271,7 @@ def run_pipeline(
     )
     
     # Process all files
-    result = pipeline.process_directory(input_dir)
+    result = pipeline.process_directory(input_dir, timeout=timeout)
     
     # Export
     pipeline.export(result)

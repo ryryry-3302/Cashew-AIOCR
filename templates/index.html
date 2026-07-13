@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashew Import Pipeline</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #7c3aed);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .step-card {
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+        
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .file-item {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .file-item:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .file-item .badge {
+            font-size: 0.75rem;
+        }
+        
+        .transaction-table {
+            font-size: 0.875rem;
+        }
+        
+        .transaction-table th {
+            position: sticky;
+            top: 0;
+            background: #f8fafc;
+            z-index: 10;
+        }
+        
+        .transaction-table tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .direction-debit {
+            color: var(--danger-color);
+            font-weight: 500;
+        }
+        
+        .direction-credit {
+            color: var(--success-color);
+            font-weight: 500;
+        }
+        
+        .category-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .category-Dining { background-color: #fed7e2; color: #881337; }
+        .category-Shopping { background-color: #fef3c7; color: #92400e; }
+        .category-Transport { background-color: #dbeafe; color: #1e40af; }
+        .category-Entertainment { background-color: #e9d5ff; color: #6b21a8; }
+        .category-Bills { background-color: #e5e7eb; color: #374151; }
+        .category-Income { background-color: #d1fae5; color: #065f46; }
+        .category-Uncategorized { background-color: #f3f4f6; color: #6b7280; }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #4338ca;
+            border-color: #4338ca;
+        }
+        
+        .progress-container {
+            display: none;
+        }
+        
+        .preview-section {
+            display: none;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .stats-card h3 {
+            font-size: 2rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stats-card p {
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .filter-btn:hover:not(.active) {
+            background-color: #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-1"><i class="bi bi-wallet2 me-2"></i>Cashew Import Pipeline</h1>
+                    <p class="mb-0 opacity-75">Upload bank statements and merge with your existing Cashew data</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <button class="btn btn-light btn-sm" onclick="downloadTemplate()">
+                        <i class="bi bi-file-earmark-arrow-down me-1"></i>Download JSON Template
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Progress Steps -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <div class="text-center flex-grow-1" id="step1-indicator">
+                        <div class="step-number" id="step1-number">1</div>
+                        <p class="mb-0 mt-2">Upload Cashew Data</p>
+                    </div>
+                    <div class="flex-grow-1 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-arrow-right text-muted"></i>
+                    </div>
+                    <div class="text-center flex-grow-1" id="step2-indicator">
+                        <div class="step-number" id="step2-number">2</div>
+                        <p class="mb-0 mt-2">Upload Bank JSONs</p>
+                    </div>
+                    <div class="flex-grow-1 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-arrow-right text-muted"></i>
+                    </div>
+                    <div class="text-center flex-grow-1" id="step3-indicator">
+                        <div class="step-number" id="step3-number">3</div>
+                        <p class="mb-0 mt-2">Review & Export</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Upload Cashew Data -->
+        <div class="row mb-4" id="step1-section">
+            <div class="col-lg-6">
+                <div class="card step-card h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Existing Cashew Data</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Upload your existing Cashew CSV file to merge new transactions.</p>
+                        <div class="upload-area" id="cashew-upload-area">
+                            <i class="bi bi-cloud-upload"></i>
+                            <h5>Drop CSV file here</h5>
+                            <p class="text-muted mb-0">or click to browse</p>
+                            <input type="file" id="cashew-file-input" accept=".csv" hidden>
+                        </div>
+                        <div id="cashew-file-list" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Upload Bank JSONs -->
+            <div class="col-lg-6">
+                <div class="card step-card h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-file-earmark-code me-2"></i>Bank Statement JSONs</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Upload JSON files extracted from bank statements.</p>
+                        <div class="upload-area" id="json-upload-area">
+                            <i class="bi bi-cloud-upload"></i>
+                            <h5>Drop JSON files here</h5>
+                            <p class="text-muted mb-0">or click to browse (multiple files)</p>
+                            <input type="file" id="json-file-input" accept=".json" multiple hidden>
+                        </div>
+                        <div id="json-file-list" class="mt-3 file-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Process Button -->
+        <div class="row mb-4" id="process-section" style="display: none;">
+            <div class="col-12 text-center">
+                <button class="btn btn-primary btn-lg" onclick="processFiles()">
+                    <i class="bi bi-play-circle me-2"></i>Process & Merge Transactions
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="row mb-4 progress-container" id="progress-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border text-primary me-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Processing...</h5>
+                                <p class="text-muted mb-0" id="progress-text">Analyzing transactions...</p>
+                            </div>
+                        </div>
+                        <div class="progress mt-3" style="height: 8px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Review & Export -->
+        <div class="row preview-section" id="preview-section">
+            <div class="col-12">
+                <div class="card step-card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-eye me-2"></i>Transaction Preview</h5>
+                        <div>
+                            <button class="btn btn-success btn-sm me-2" onclick="exportCSV()">
+                                <i class="bi bi-download me-1"></i>Export CSV
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>New Import
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Stats -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="stats-card">
+                                    <h3 id="total-transactions">0</h3>
+                                    <p>Total Transactions</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                    <h3 id="new-transactions">0</h3>
+                                    <p>New Transactions</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                    <h3 id="duplicates-removed">0</h3>
+                                    <p>Duplicates Removed</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                    <h3 id="uncategorized">0</h3>
+                                    <p>Uncategorized</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="filter-bar">
+                            <button class="btn btn-outline-primary filter-btn active" data-filter="all">All</button>
+                            <button class="btn btn-outline-primary filter-btn" data-filter="Dining">Dining</button>
+                            <button class="btn btn-outline-primary filter-btn" data-filter="Shopping">Shopping</button>
+                            <button class="btn btn-outline-primary filter-btn" data-filter="Transport">Transport</button>
+                            <button class="btn btn-outline-primary filter-btn" data-filter="Entertainment">Entertainment</button>
+                            <button class="btn btn-outline-primary filter-btn" data-filter="Bills">Bills</button>
+                            <button class="btn btn-outline-primary filter-btn" data-filter="Income">Income</button>
+                            <button class="btn btn-outline-primary filter-btn" data-filter="Uncategorized">Uncategorized</button>
+                        </div>
+
+                        <!-- Search -->
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="search-input" placeholder="Search transactions...">
+                            </div>
+                        </div>
+
+                        <!-- Transaction Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover transaction-table" id="transactions-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Title</th>
+                                        <th>Note</th>
+                                        <th>Amount</th>
+                                        <th>Category</th>
+                                        <th>Icon</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactions-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let cashewFile = null;
+        let jsonFiles = [];
+        let processedData = null;
+
+        // Cashew file upload
+        const cashewUploadArea = document.getElementById('cashew-upload-area');
+        const cashewFileInput = document.getElementById('cashew-file-input');
+        const cashewFileList = document.getElementById('cashew-file-list');
+
+        cashewUploadArea.addEventListener('click', () => cashewFileInput.click());
+        cashewFileInput.addEventListener('change', handleCashewFile);
+        cashewUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            cashewUploadArea.classList.add('dragover');
+        });
+        cashewUploadArea.addEventListener('dragleave', () => cashewUploadArea.classList.remove('dragover'));
+        cashewUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            cashewUploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleCashewFile({ target: { files: e.dataTransfer.files } });
+        });
+
+        function handleCashewFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            cashewFile = file;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const response = await fetch('/api/upload-cashew', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        cashewFileList.innerHTML = `
+                            <div class="file-item">
+                                <span><i class="bi bi-file-earmark-spreadsheet me-2"></i>${data.filename}</span>
+                                <span class="badge bg-success">${data.transaction_count} transactions</span>
+                            </div>
+                        `;
+                        checkReady();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (err) {
+                    alert('Error uploading file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // JSON files upload
+        const jsonUploadArea = document.getElementById('json-upload-area');
+        const jsonFileInput = document.getElementById('json-file-input');
+        const jsonFileList = document.getElementById('json-file-list');
+
+        jsonUploadArea.addEventListener('click', () => jsonFileInput.click());
+        jsonFileInput.addEventListener('change', handleJsonFiles);
+        jsonUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            jsonUploadArea.classList.add('dragover');
+        });
+        jsonUploadArea.addEventListener('dragleave', () => jsonUploadArea.classList.remove('dragover'));
+        jsonUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            jsonUploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleJsonFiles({ target: { files: e.dataTransfer.files } });
+        });
+
+        function handleJsonFiles(e) {
+            const files = Array.from(e.target.files);
+            jsonFiles = files;
+            
+            jsonFileList.innerHTML = '';
+            let totalTransactions = 0;
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const formData = new FormData();
+                        formData.append('files', file);
+                        const response = await fetch('/api/upload-jsons', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            data.uploaded_files.forEach(f => {
+                                totalTransactions += f.transaction_count;
+                                jsonFileList.innerHTML += `
+                                    <div class="file-item">
+                                        <span><i class="bi bi-file-earmark-code me-2"></i>${f.filename}</span>
+                                        <span class="badge bg-info">${f.transaction_count} transactions</span>
+                                    </div>
+                                `;
+                            });
+                            checkReady();
+                        }
+                    } catch (err) {
+                        console.error('Error:', err);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function checkReady() {
+            const hasCashew = cashewFile !== null;
+            const hasJsons = jsonFiles.length > 0;
+            
+            // Update UI to show what's been uploaded
+            const step1Indicator = document.getElementById('step1-indicator');
+            const step2Indicator = document.getElementById('step2-indicator');
+            
+            if (hasCashew) {
+                step1Indicator.style.color = 'var(--success-color)';
+                step1Indicator.querySelector('.step-number').style.backgroundColor = 'var(--success-color)';
+            }
+            if (hasJsons) {
+                step2Indicator.style.color = 'var(--success-color)';
+                step2Indicator.querySelector('.step-number').style.backgroundColor = 'var(--success-color)';
+            }
+            
+            // Show process button when at least one file type is uploaded
+            if (hasCashew || hasJsons) {
+                document.getElementById('process-section').style.display = 'block';
+            }
+        }
+
+        async function processFiles() {
+            document.getElementById('process-section').style.display = 'none';
+            document.getElementById('progress-section').style.display = 'block';
+            document.getElementById('progress-text').textContent = 'Processing transactions...';
+
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cashew_filepath: cashewFile ? cashewFile.name : null,
+                        json_files: jsonFiles.map(f => f.name)
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    processedData = data;
+                    document.getElementById('progress-section').style.display = 'none';
+                    document.getElementById('preview-section').style.display = 'block';
+                    updateStats(data);
+                    renderTransactions(data.transactions);
+                }
+            } catch (err) {
+                alert('Error processing files: ' + err.message);
+                document.getElementById('progress-section').style.display = 'none';
+                document.getElementById('process-section').style.display = 'block';
+            }
+        }
+
+        function updateStats(data) {
+            document.getElementById('total-transactions').textContent = data.total_count;
+            document.getElementById('new-transactions').textContent = data.total_count - (cashewFile ? 15 : 0);
+            document.getElementById('duplicates-removed').textContent = data.duplicates_removed;
+            document.getElementById('uncategorized').textContent = data.uncategorized_count;
+        }
+
+        function renderTransactions(transactions) {
+            const tbody = document.getElementById('transactions-body');
+            tbody.innerHTML = '';
+            
+            transactions.forEach(tx => {
+                const amountClass = tx.income === 'true' ? 'direction-credit' : 'direction-debit';
+                const amount = parseFloat(tx.amount);
+                const displayAmount = amountClass === 'direction-credit' ? `+${amount.toFixed(2)}` : `-${Math.abs(amount).toFixed(2)}`;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${tx.date}</td>
+                    <td>${tx.title}</td>
+                    <td class="text-muted small">${tx.note}</td>
+                    <td class="${amountClass}">${displayAmount}</td>
+                    <td><span class="category-badge category-${tx['category name']}">${tx['category name']}</span></td>
+                    <td>${tx.icon}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Filter functionality
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filter = this.dataset.filter;
+                const rows = document.querySelectorAll('#transactions-body tr');
+                
+                rows.forEach(row => {
+                    const category = row.querySelector('.category-badge').textContent;
+                    if (filter === 'all' || category === filter) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Search functionality
+        document.getElementById('search-input').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#transactions-body tr');
+            
+            rows.forEach(row => {
+                const title = row.cells[1].textContent.toLowerCase();
+                const note = row.cells[2].textContent.toLowerCase();
+                if (title.includes(searchTerm) || note.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        async function exportCSV() {
+            try {
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'cashew_import.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }
+            } catch (err) {
+                alert('Error exporting CSV: ' + err.message);
+            }
+        }
+
+        async function downloadTemplate() {
+            try {
+                const response = await fetch('/api/download-template');
+                const template = await response.json();
+                const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'bank_statement_template.json';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (err) {
+                alert('Error downloading template: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

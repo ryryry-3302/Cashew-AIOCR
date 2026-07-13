@@ -3,7 +3,7 @@
 import re
 from typing import Optional, List, Tuple
 
-from .models import CanonicalTransaction, MerchantRule
+from models import CanonicalTransaction, MerchantRule
 
 
 class MerchantMatcher:

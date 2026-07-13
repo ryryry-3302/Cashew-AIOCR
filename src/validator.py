@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional, List, Tuple
 from pathlib import Path
 
-from .models import CanonicalTransaction, Direction, ValidationResult
+from models import CanonicalTransaction, Direction, ValidationResult
 
 
 # Required fields for a valid transaction

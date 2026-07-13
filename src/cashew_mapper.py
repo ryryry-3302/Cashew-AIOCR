@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 
-from .models import CanonicalTransaction, CashewTransaction, CashewType
+from models import CanonicalTransaction, CashewTransaction, CashewType
 
 
 class CashewMapper:

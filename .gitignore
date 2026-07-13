@@ -3,3 +3,4 @@ input/
 output/
 .gitignore
 src/__pycache__/
+venv/

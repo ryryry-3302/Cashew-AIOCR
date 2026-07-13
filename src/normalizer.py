@@ -3,7 +3,7 @@
 import re
 from typing import Optional, List
 
-from .models import CanonicalTransaction
+from models import CanonicalTransaction
 
 
 class DescriptionNormalizer:

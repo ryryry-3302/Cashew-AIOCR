@@ -5,7 +5,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import List
 
-from .models import CashewTransaction, CashewType, Direction
+from models import CashewTransaction, CashewType, Direction
 
 
 class CashewExporter:

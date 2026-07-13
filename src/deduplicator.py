@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Set, Tuple
 
-from .models import CanonicalTransaction, DuplicateInfo
+from models import CanonicalTransaction, DuplicateInfo
 
 
 class DuplicateDetector:
